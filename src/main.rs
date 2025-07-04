@@ -1,8 +1,9 @@
-use std::env::set_current_dir;
+use crate::builtin::cd::change_directory;
 use std::ffi::CString;
 use std::io;
 use std::io::Write;
-use std::path::Path;
+
+mod builtin;
 
 const PROMPT: &str = "> ";
 
@@ -13,31 +14,15 @@ const PROMPT: &str = "> ";
 /// TODO make boosh good and usable so that I can daily drive it
 /// TODO color support
 
-fn change_directory(args: Vec<&str>) -> Result<(), std::io::Error> {
-    let path = match args[1] {
-        "~" => Path::new("/home/gabriel/"),
-        _ => Path::new(args[1]),
-    };
-
-    match set_current_dir(path) {
-        Err(e) => {
-            eprintln!("Directory not found");
-            Err(e)
-        }
-        Ok(_) => Ok(()),
-    }
-}
-
 fn parse_args(command: &String) -> Vec<&str> {
     return command.split_whitespace().collect();
 }
 
 fn boosh_run(args: Vec<&str>) {
     match args[0] {
-        "cd" => match change_directory(args) {
-            Err(_) => {}
-            Ok(_) => {}
-        },
+        "cd" => {
+            change_directory(args);
+        }
         _ => {
             unsafe {
                 let child_pid = libc::fork();
@@ -48,7 +33,6 @@ fn boosh_run(args: Vec<&str>) {
                     }
                     0 => {
                         // We are the child process
-                        // execve
                         // command => ls where args is -lah
                         let c_command = CString::new(args[0]).unwrap();
                         let c_args: Vec<CString> =
