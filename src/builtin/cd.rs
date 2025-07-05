@@ -38,7 +38,6 @@ impl DirManager {
         let home_path: String = match var(key) {
             Ok(val) => val,
             Err(_) => {
-                eprintln!("Cannot find $HOME");
                 panic!("Cannot find $HOME");
             }
         };
