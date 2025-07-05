@@ -1,5 +1,5 @@
 # Boosh
-### Mighty Linux interactive shell. Not an acronym.
+### A mighty interactive shell for Linux
 
 <p align="center">
     <img src="https://github.com/Echinoidea/boosh/blob/master/docs/github/images/boosh-logo.png" alt="boosh logo" width="256" height="256"/>
