@@ -1,4 +1,4 @@
-use std::process::{Command, Stdio};
+use std::process::{ChildStdout, Command, Stdio};
 
 use crate::builtin::cd::DirManager;
 
@@ -28,14 +28,15 @@ impl<'a> Parse for BooshCommand<'_> {
 
 pub trait Executable {
     /// TODO: dir manager needs to be handled differently
-    fn execute(self: &Self, dir_manager: &mut DirManager);
+    fn execute(self: &Self, dir_manager: &mut DirManager) -> Option<String>;
 }
 
 impl<'a> Executable for BooshCommand<'_> {
-    fn execute(self: &Self, dir_manager: &mut DirManager) {
+    fn execute(self: &Self, dir_manager: &mut DirManager) -> Option<String> {
         match self.program {
             "cd" => {
                 dir_manager.change_directory(self.args.clone());
+                return None;
             }
             _ => {
                 let child = Command::new(self.program)
@@ -43,15 +44,17 @@ impl<'a> Executable for BooshCommand<'_> {
                     .stdin(Stdio::inherit())
                     .stdout(Stdio::inherit())
                     .stderr(Stdio::inherit())
-                    .spawn();
+                    .output();
 
                 match child {
-                    Ok(mut child_process) => {
+                    Ok(child_process) => {
                         // wait for child to finish
-                        let _ = child_process.wait();
+                        // let _ = child_process.wait();
+                        return Some(String::from_utf8_lossy(&child_process.stdout).to_string());
                     }
                     Err(e) => {
                         eprintln!("Failed to execute command: {}", e);
+                        return None;
                     }
                 }
             }

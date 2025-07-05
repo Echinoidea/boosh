@@ -1,5 +1,6 @@
 use builtin::cd::DirManager;
 use shell::boosh_command::{BooshCommand, Executable, Parse};
+use shell::prompt::{self, Prompt};
 
 use std::io;
 use std::io::Write;
@@ -9,7 +10,7 @@ use std::process::{Command, Stdio};
 mod builtin;
 mod shell;
 
-const PROMPT: &str = "> ";
+const PROMPT: &str = "$date > ";
 
 /// TODO make cd - for last directory
 /// TODO modularize code
@@ -21,9 +22,11 @@ const PROMPT: &str = "> ";
 
 fn boosh_loop() {
     let mut dir_manager = DirManager::new();
+    let mut prompt = Prompt::new(&PROMPT.to_owned());
 
     loop {
-        print!("{}", PROMPT);
+        prompt.parse(&mut dir_manager);
+        prompt.print();
         std::io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -44,6 +47,8 @@ fn boosh_loop() {
                 command.execute(&mut dir_manager);
             }
         }
+
+        println!("");
     }
 }
 
