@@ -7,3 +7,10 @@
 
 Work in progress but is currently functional as a basic interactive shell.
 
+## Installation
+Requires cargo
+Add ~/.cargo/bin to PATH (or execute boosh bin manually from here)
+
+`cargo install --git https://github.com/Echinoidea/boosh.git`
+
+`boosh`
