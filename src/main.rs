@@ -1,7 +1,5 @@
 use builtin::cd::DirManager;
 
-use crate::builtin::cd::DirManager;
-
 use std::io;
 use std::io::Write;
 
@@ -17,6 +15,7 @@ const PROMPT: &str = "> ";
 /// TODO boosh prompt config
 /// TODO make boosh good and usable so that I can daily drive it
 /// TODO color support
+/// TODO C-l C-c etc
 
 /// Struct storing a single command, as in a single program with args. Can be piped.
 struct BooshCommand<'a> {
@@ -42,10 +41,10 @@ impl Parse for BooshCommand<'_> {
     }
 }
 
-fn boosh_run(command: BooshCommand) {
+fn boosh_run(command: BooshCommand, dir_manager: &mut DirManager) {
     match command.program {
         "cd" => {
-            change_directory(command.args);
+            dir_manager.change_directory(command.args);
         }
         _ => {
             let child = Command::new(command.program)
@@ -69,6 +68,8 @@ fn boosh_run(command: BooshCommand) {
 }
 
 fn boosh_loop() {
+    let mut dir_manager = DirManager::new();
+
     loop {
         print!("{}", PROMPT);
         std::io::stdout().flush().unwrap();
@@ -88,7 +89,7 @@ fn boosh_loop() {
                 break;
             }
             _ => {
-                boosh_run(command);
+                boosh_run(command, &mut dir_manager);
             }
         }
     }
