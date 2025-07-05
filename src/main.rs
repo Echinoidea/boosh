@@ -1,4 +1,5 @@
 use builtin::cd::DirManager;
+use shell::boosh_command::{BooshCommand, Parse};
 
 use std::io;
 use std::io::Write;
@@ -6,6 +7,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 mod builtin;
+mod shell;
 
 const PROMPT: &str = "> ";
 
@@ -16,30 +18,6 @@ const PROMPT: &str = "> ";
 /// TODO make boosh good and usable so that I can daily drive it
 /// TODO color support
 /// TODO C-l C-c etc
-
-/// Struct storing a single command, as in a single program with args. Can be piped.
-struct BooshCommand<'a> {
-    program: &'a str,
-    args: Vec<&'a str>,
-}
-
-trait Parse {
-    /// Construct a new BooshCommand from a raw string input
-    fn from_input(input: &String) -> BooshCommand;
-}
-
-impl Parse for BooshCommand<'_> {
-    fn from_input(input: &String) -> BooshCommand {
-        let tokens: Vec<&str> = input.split_whitespace().collect();
-
-        let (program, args) = match tokens.split_first() {
-            Some((&first, rest)) => (first, rest.to_vec()),
-            None => (":", Vec::new()),
-        };
-
-        BooshCommand { program, args }
-    }
-}
 
 fn boosh_run(command: BooshCommand, dir_manager: &mut DirManager) {
     match command.program {
