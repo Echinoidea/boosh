@@ -1,7 +1,9 @@
-use crate::builtin::cd::change_directory;
-use std::ffi::CString;
+use builtin::cd::DirManager;
+
 use std::io;
 use std::io::Write;
+
+use std::process::{Command, Stdio};
 
 mod builtin;
 
@@ -13,44 +15,52 @@ const PROMPT: &str = "> ";
 /// TODO boosh prompt config
 /// TODO make boosh good and usable so that I can daily drive it
 /// TODO color support
+/// TODO C-l C-c etc
 
-fn parse_args(command: &String) -> Vec<&str> {
-    return command.split_whitespace().collect();
+/// Struct storing a single command, as in a single program with args. Can be piped.
+struct BooshCommand<'a> {
+    program: &'a str,
+    args: Vec<&'a str>,
 }
 
-fn boosh_run(args: Vec<&str>) {
-    match args[0] {
+trait Parse {
+    /// Construct a new BooshCommand from a raw string input
+    fn from_input(input: &String) -> BooshCommand;
+}
+
+impl Parse for BooshCommand<'_> {
+    fn from_input(input: &String) -> BooshCommand {
+        let tokens: Vec<&str> = input.split_whitespace().collect();
+
+        let (program, args) = match tokens.split_first() {
+            Some((&first, rest)) => (first, rest.to_vec()),
+            None => (":", Vec::new()),
+        };
+
+        BooshCommand { program, args }
+    }
+}
+
+fn boosh_run(command: BooshCommand, dir_manager: &mut DirManager) {
+    match command.program {
         "cd" => {
-            change_directory(args);
+            dir_manager.change_directory(command.args);
         }
         _ => {
-            unsafe {
-                let child_pid = libc::fork();
+            let child = Command::new(command.program)
+                .args(command.args)
+                .stdin(Stdio::inherit())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .spawn();
 
-                match child_pid {
-                    -1 => {
-                        eprintln!("Error forking");
-                    }
-                    0 => {
-                        // We are the child process
-                        // command => ls where args is -lah
-                        let c_command = CString::new(args[0]).unwrap();
-                        let c_args: Vec<CString> =
-                            args.iter().map(|&arg| CString::new(arg).unwrap()).collect();
-
-                        let mut c_args_ptrs: Vec<*const libc::c_char> =
-                            c_args.iter().map(|c_str| c_str.as_ptr()).collect();
-
-                        c_args_ptrs.push(std::ptr::null());
-
-                        libc::execvp(c_command.as_ptr(), c_args_ptrs.as_ptr());
-                    }
-                    _ => {
-                        // We are the parent
-                        let mut status: libc::c_int = 0;
-                        libc::waitpid(child_pid, &mut status, 0);
-                        // Return back to main loop
-                    }
+            match child {
+                Ok(mut child_process) => {
+                    // wait for child to finish
+                    let _ = child_process.wait();
+                }
+                Err(e) => {
+                    eprintln!("Failed to execute command: {}", e);
                 }
             }
         }
@@ -58,6 +68,8 @@ fn boosh_run(args: Vec<&str>) {
 }
 
 fn boosh_loop() {
+    let mut dir_manager = DirManager::new();
+
     loop {
         print!("{}", PROMPT);
         std::io::stdout().flush().unwrap();
@@ -70,12 +82,14 @@ fn boosh_loop() {
 
         let input = input.trim().to_string();
 
+        let command: BooshCommand = BooshCommand::from_input(&input);
+
         match input.as_str() {
             "exit" => {
                 break;
             }
             _ => {
-                boosh_run(parse_args(&input));
+                boosh_run(command, &mut dir_manager);
             }
         }
     }
