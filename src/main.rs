@@ -8,7 +8,8 @@ use std::io::Write;
 mod builtin;
 mod shell;
 
-const PROMPT: &str = "$(date +%s) $(whoami) > ";
+const PROMPT: &str =
+    "\n$(echo -e \\e[36m)$(pwd)$(echo -e \\e[0m)\n$(echo -e \\e[34mboosh\\e[0m)$(echo -e \\e[32m) $(date +%H:%M)$(echo -e \\e[0m) $(echo -e \\e[31m)gabriel$(echo -e \\e[0m) $ ";
 
 /// TODO make cd - for last directory
 /// TODO modularize code
