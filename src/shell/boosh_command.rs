@@ -1,25 +1,34 @@
-use std::process::{ChildStdout, Command, Stdio};
-
+use super::parser::{Expandable, Tokenizable};
 use crate::builtin::cd::DirManager;
+use std::process::{Command, Stdio};
 
 /// Struct storing a single command, as in a single program with args. Can be piped.
-pub struct BooshCommand<'a> {
-    pub program: &'a str,
-    pub args: Vec<&'a str>,
+pub struct BooshCommand {
+    pub program: String,
+    pub args: Vec<String>,
 }
+
+impl Expandable for BooshCommand {}
+impl Tokenizable for BooshCommand {}
 
 pub trait Parse {
     /// Construct a new BooshCommand from a raw string input
-    fn from_input(input: &String) -> BooshCommand;
+    fn from_input(input: &str) -> BooshCommand;
 }
 
-impl<'a> Parse for BooshCommand<'_> {
-    fn from_input(input: &String) -> BooshCommand {
-        let tokens: Vec<&str> = input.split_whitespace().collect();
+impl Parse for BooshCommand {
+    /// Take a raw string, tokenize it, and parse it into a BooshCommand instance
+    fn from_input(input: &str) -> BooshCommand {
+        // Create a temporary instance to use the trait methods
+        let temp = BooshCommand {
+            program: String::new(),
+            args: Vec::new(),
+        };
 
+        let tokens = temp.parse_tokens(input);
         let (program, args) = match tokens.split_first() {
-            Some((&first, rest)) => (first, rest.to_vec()),
-            None => (":", Vec::new()),
+            Some((first, rest)) => (first.clone(), rest.to_vec()),
+            None => ("".to_string(), Vec::new()),
         };
 
         BooshCommand { program, args }
@@ -27,34 +36,32 @@ impl<'a> Parse for BooshCommand<'_> {
 }
 
 pub trait Executable {
-    /// TODO: dir manager needs to be handled differently
-    fn execute(self: &Self, dir_manager: &mut DirManager) -> Option<String>;
+    fn execute(&self, dir_manager: &mut DirManager) -> Option<String>;
 }
 
-impl<'a> Executable for BooshCommand<'_> {
-    fn execute(self: &Self, dir_manager: &mut DirManager) -> Option<String> {
-        match self.program {
+impl Executable for BooshCommand {
+    fn execute(&self, dir_manager: &mut DirManager) -> Option<String> {
+        match self.program.as_str() {
             "cd" => {
-                dir_manager.change_directory(self.args.clone());
-                return None;
+                // Convert String args to &str for compatibility
+                let str_args: Vec<&str> = self.args.iter().map(|s| s.as_str()).collect();
+                dir_manager.change_directory(str_args);
+                None
             }
             _ => {
-                let child = Command::new(self.program)
-                    .args(self.args.clone())
+                match Command::new(&self.program)
+                    .args(&self.args)
                     .stdin(Stdio::inherit())
                     .stdout(Stdio::inherit())
                     .stderr(Stdio::inherit())
-                    .output();
-
-                match child {
+                    .output()
+                {
                     Ok(child_process) => {
-                        // wait for child to finish
-                        // let _ = child_process.wait();
-                        return Some(String::from_utf8_lossy(&child_process.stdout).to_string());
+                        Some(String::from_utf8_lossy(&child_process.stdout).to_string())
                     }
                     Err(e) => {
                         eprintln!("Failed to execute command: {}", e);
-                        return None;
+                        None
                     }
                 }
             }

@@ -1,56 +1,35 @@
+use crate::builtin::cd::DirManager;
 use std::io::Write;
 
-use crate::builtin::cd::DirManager;
-
-use super::boosh_command::{BooshCommand, Executable, Parse};
+use super::parser::Expandable;
 
 /// Customizable prompt which can echo program output
-
 pub struct Prompt {
     // Raw string for prompt from config
     raw: String,
-    // // Go through tokens, if token starts with $, process the rest of the token as a command, else simply print
-    // tokens: Vec<&'a str>,
-
     // Final string after command execution to print as prompt
     output: String,
 }
 
+impl Expandable for Prompt {}
+
 impl Prompt {
-    pub fn parse(self: &mut Self, dir_manager: &mut DirManager) {
+    pub fn parse(&mut self, _dir_manager: &mut DirManager) {
         self.output.clear();
-        let tokens: Vec<&str> = self.raw.split_whitespace().collect();
-
-        for token in tokens.iter() {
-            match token.split_at(1).0 {
-                "$" => {
-                    // Exec command and save to output
-                    let program = token[1..].to_string();
-                    let command: BooshCommand = BooshCommand::from_input(&program);
-                    // print!("{:?} {:?}", command.program, command.args);
-
-                    let out = command
-                        .execute(dir_manager)
-                        .unwrap_or_else(|| "".to_string());
-                    self.output.push_str(out.as_str());
-                }
-                _ => {
-                    self.output.push_str(token);
-                }
-            }
-        }
+        // Use the trait method directly
+        self.output = self.expand_sub_command(&self.raw);
     }
 
     /// Print the prompt output after execution of any commands
-    pub fn print(self: &Self) {
+    pub fn print(&self) {
         print!("{}", self.output);
         std::io::stdout().flush().unwrap();
     }
 
-    pub fn new(raw: &String) -> Self {
-        return Prompt {
+    pub fn new(raw: &str) -> Self {
+        Prompt {
             raw: raw.to_string(),
             output: String::new(),
-        };
+        }
     }
 }

@@ -1,16 +1,14 @@
 use builtin::cd::DirManager;
 use shell::boosh_command::{BooshCommand, Executable, Parse};
-use shell::prompt::{self, Prompt};
+use shell::prompt::Prompt;
 
 use std::io;
 use std::io::Write;
 
-use std::process::{Command, Stdio};
-
 mod builtin;
 mod shell;
 
-const PROMPT: &str = "\n $date > \n";
+const PROMPT: &str = "$(date +%s) $(whoami) > ";
 
 /// TODO make cd - for last directory
 /// TODO modularize code
