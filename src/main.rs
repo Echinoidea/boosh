@@ -10,7 +10,7 @@ use std::process::{Command, Stdio};
 mod builtin;
 mod shell;
 
-const PROMPT: &str = "$date > ";
+const PROMPT: &str = "\n $date > \n";
 
 /// TODO make cd - for last directory
 /// TODO modularize code
@@ -47,8 +47,6 @@ fn boosh_loop() {
                 command.execute(&mut dir_manager);
             }
         }
-
-        println!("");
     }
 }
 
