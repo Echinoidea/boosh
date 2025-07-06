@@ -16,11 +16,9 @@ impl Expandable for Prompt {}
 impl Prompt {
     pub fn parse(&mut self, _dir_manager: &mut DirManager) {
         self.output.clear();
-        // Use the trait method directly
         self.output = self.expand_sub_command(&self.raw);
     }
 
-    /// Print the prompt output after execution of any commands
     pub fn print(&self) {
         print!("{}", self.output);
         std::io::stdout().flush().unwrap();
