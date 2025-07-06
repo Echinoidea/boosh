@@ -1,5 +1,6 @@
+use super::environment::BooshEnvironment;
 use super::parser::{Expandable, Tokenizable};
-use crate::builtin::cd::DirManager;
+use crate::builtin::cd::change_directory;
 use std::process::{Command, Stdio};
 
 /// Struct storing a single command, as in a single program with args. Can be piped.
@@ -36,16 +37,16 @@ impl Parse for BooshCommand {
 }
 
 pub trait Executable {
-    fn execute(&self, dir_manager: &mut DirManager) -> Option<String>;
+    fn execute(&self, boosh_env: &mut BooshEnvironment) -> Option<String>;
 }
 
 impl Executable for BooshCommand {
-    fn execute(&self, dir_manager: &mut DirManager) -> Option<String> {
+    fn execute(&self, boosh_env: &mut BooshEnvironment) -> Option<String> {
         match self.program.as_str() {
             "cd" => {
                 // Convert String args to &str for compatibility
                 let str_args: Vec<&str> = self.args.iter().map(|s| s.as_str()).collect();
-                dir_manager.change_directory(str_args);
+                change_directory(boosh_env, str_args);
                 None
             }
             _ => {

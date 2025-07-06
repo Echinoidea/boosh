@@ -1,5 +1,5 @@
-use builtin::cd::DirManager;
 use shell::boosh_command::{BooshCommand, Executable, Parse};
+use shell::environment::BooshEnvironment;
 use shell::prompt::Prompt;
 
 use std::io;
@@ -11,7 +11,7 @@ mod shell;
 const PROMPT: &str =
     "\n$(echo -e \\e[36m)$(pwd)$(echo -e \\e[0m)\n$(echo -e \\e[34mboosh\\e[0m)$(echo -e \\e[32m) $(date +%H:%M)$(echo -e \\e[0m) $(echo -e \\e[31m)gabriel$(echo -e \\e[0m) $ ";
 
-/// TODO make cd - for last directory
+/// DONE make cd - for last directory
 /// TODO modularize code
 /// TODO boosh parser
 /// TODO boosh prompt config
@@ -20,11 +20,11 @@ const PROMPT: &str =
 /// TODO C-l C-c etc
 
 fn boosh_loop() {
-    let mut dir_manager = DirManager::new();
+    let mut boosh_env = BooshEnvironment::new();
     let mut prompt = Prompt::new(&PROMPT.to_owned());
 
     loop {
-        prompt.parse(&mut dir_manager);
+        prompt.parse();
         prompt.print();
         std::io::stdout().flush().unwrap();
 
@@ -43,7 +43,7 @@ fn boosh_loop() {
                 break;
             }
             _ => {
-                command.execute(&mut dir_manager);
+                command.execute(&mut boosh_env);
             }
         }
     }

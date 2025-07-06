@@ -1,4 +1,3 @@
-use crate::builtin::cd::DirManager;
 use std::io::Write;
 
 use super::parser::Expandable;
@@ -14,7 +13,7 @@ pub struct Prompt {
 impl Expandable for Prompt {}
 
 impl Prompt {
-    pub fn parse(&mut self, _dir_manager: &mut DirManager) {
+    pub fn parse(&mut self) {
         self.output.clear();
         self.output = self.expand_sub_command(&self.raw);
     }
