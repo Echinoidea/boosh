@@ -42,6 +42,7 @@ pub trait Executable {
 
 impl Executable for BooshCommand {
     fn execute(&self, boosh_env: &mut BooshEnvironment) -> Option<String> {
+        // TODO: Match to any member of builtin enum, execute accordingly
         match self.program.as_str() {
             "cd" => {
                 // Convert String args to &str for compatibility
@@ -62,7 +63,6 @@ impl Executable for BooshCommand {
                     }
                     Err(e) => {
                         eprintln!("Failed to execute command: {}", e);
-                        None
                     }
                 }
             }

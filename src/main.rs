@@ -20,7 +20,9 @@ const PROMPT: &str =
 /// TODO C-l C-c etc
 
 fn boosh_loop() {
+    // Manage environment states
     let mut boosh_env = BooshEnvironment::new();
+
     let mut prompt = Prompt::new(&PROMPT.to_owned());
 
     loop {

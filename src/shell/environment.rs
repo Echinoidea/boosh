@@ -27,8 +27,8 @@ impl BooshEnvironment {
 // cd history
 // command history
 // eventually, concurrent processes maybe would also fit here
-/// Describes something that can be recorded into a field
-/// of the BooshEnvrionment struct. E.g. cd history
+
+/// Record directories
 pub trait RecordDir {
     /// Push a relative path, which is converted to an absolute path,
     /// to the BooshEnvironment.dir_history vector
